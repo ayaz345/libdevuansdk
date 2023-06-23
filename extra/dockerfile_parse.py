@@ -28,9 +28,7 @@ def rstrip_backslash(line):
     Strip backslashes from end of line
     """
     line = line.rstrip()
-    if line.endswith('\\'):
-        return line[:-1]
-    return line
+    return line[:-1] if line.endswith('\\') else line
 
 
 def parse_instruction(inst):
@@ -112,20 +110,19 @@ def main():
         lineno += 1
         if commentre.match(line):
             continue
-        if not in_continuation:
-            rematch = instre.match(line)
-            if not rematch:
-                continue
-            cur_inst = {
-                'instruction': rematch.groups()[0].upper(),
-                'value': rstrip_backslash(rematch.groups()[1]),
-            }
-        else:
+        if in_continuation:
             if cur_inst['value']:
                 cur_inst['value'] += rstrip_backslash(line)
             else:
                 cur_inst['value'] = rstrip_backslash(line.lstrip())
 
+        elif rematch := instre.match(line):
+            cur_inst = {
+                'instruction': rematch.groups()[0].upper(),
+                'value': rstrip_backslash(rematch.groups()[1]),
+            }
+        else:
+            continue
         in_continuation = contre.match(line)
         if not in_continuation and cur_inst is not None:
             if not args.keeptabs:
